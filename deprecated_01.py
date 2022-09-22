@@ -66,9 +66,6 @@ piece_values = {
     chess.KING: 20000
 }
 
-
-board = chess.Board(chess.STARTING_FEN)
-
 """
 for square in chess.SQUARES:
     piece = board.piece_at(square)
@@ -81,43 +78,77 @@ for square in chess.SQUARES:
         black_material += piece_values[piece.piece_type]
 """
 #computes the material score of a given position for each colour
-#returns very hight score for mate (forgot to implement that in previous version of the function...)
 def score(position):
-    white_material = 0
-    black_material = 0
-    if position.is_game_over():
-        if position.turn:
-            return float('inf')
-        else :
-            return -float('inf')
+
+    if False:  
+        print("nothing")
     else :  
-        wp = len(board.pieces(chess.PAWN, chess.WHITE)) 
-        wk = len(board.pieces(chess.KNIGHT, chess.WHITE)) 
-        wb = len(board.pieces(chess.BISHOP, chess.WHITE)) 
-        wr = len(board.pieces(chess.ROOK, chess.WHITE)) 
-        wq = len(board.pieces(chess.QUEEN, chess.WHITE)) 
-        bp = len(board.pieces(chess.PAWN, chess.BLACK)) 
-        bk = len(board.pieces(chess.KNIGHT, chess.BLACK)) 
-        bb = len(board.pieces(chess.BISHOP, chess.BLACK)) 
-        br = len(board.pieces(chess.ROOK, chess.BLACK)) 
-        bq = len(board.pieces(chess.QUEEN, chess.BLACK)) 
+        wp = len(position.pieces(chess.PAWN, chess.WHITE)) 
+        wk = len(position.pieces(chess.KNIGHT, chess.WHITE)) 
+        wb = len(position.pieces(chess.BISHOP, chess.WHITE)) 
+        wr = len(position.pieces(chess.ROOK, chess.WHITE)) 
+        wq = len(position.pieces(chess.QUEEN, chess.WHITE)) 
+        bp = len(position.pieces(chess.PAWN, chess.BLACK)) 
+        bk = len(position.pieces(chess.KNIGHT, chess.BLACK)) 
+        bb = len(position.pieces(chess.BISHOP, chess.BLACK)) 
+        br = len(position.pieces(chess.ROOK, chess.BLACK)) 
+        bq = len(position.pieces(chess.QUEEN, chess.BLACK)) 
 
         material_score = (wp - bp) * piece_values[chess.PAWN] + (wk - bk) * piece_values[chess.KNIGHT] + (wb - bb) * piece_values[chess.BISHOP] + (wr - br) * piece_values[chess.ROOK] + (wq - bq) * piece_values[chess.QUEEN]
         
         return material_score
 
-def quiece(position, alpha, beta, player) :
-    return score(position)
+def quiece(position, alpha, beta) :
+        #print("Q search")
+    starter = score(position)
+    if starter >= beta :
+        return beta
+    if starter > alpha:
+        alpha = starter
 
-def minmax(position, depth, alpha, beta, nextPlayer) : 
+    for move in position.legal_moves :
+        if position.is_capture(move):
+            #print("here")
+            position.push(move)
+            temp_score = - quiece(position, -beta, -alpha)
+            position.pop()
+
+            if temp_score >= beta :
+                return beta
+            if temp_score > alpha :
+                alpha = temp_score
+
+    return alpha
+
+def minmax(position, depth):
     if depth == 0 or position.is_game_over() :
-        return quiece(position, alpha, beta, nextPlayer)  
-    else :
-        if nextPlayer:
+        return score(position)
+    else:
+        if position.turn:
             value = -float('inf')
             for move in position.generate_legal_moves():
                 position.push(move)
-                value = max(minmax(position, depth - 1, alpha, beta, False), value)
+                value = max(minmax(position, depth - 1), value)
+                position.pop()
+            return value 
+        else :
+            value = float('inf')
+            for move in position.generate_legal_moves():
+                position.push(move)
+                value = min(minmax(position,depth - 1), value)
+                position.pop()
+            return value
+
+
+def minmax_alpha_beta(position, depth, alpha, beta) : 
+    if depth == 0 or position.is_game_over() :
+        return quiece(position, alpha, beta)  
+    else :
+        if position.turn:
+            value = -float('inf')
+            for move in position.generate_legal_moves():
+                position.push(move)
+                value = max(minmax_alpha_beta(position, depth - 1, alpha, beta), value)
                 position.pop()
                 if value >= beta:
                     break #beta cutoff ?
@@ -127,7 +158,7 @@ def minmax(position, depth, alpha, beta, nextPlayer) :
             value = float('inf')
             for move in position.generate_legal_moves():
                 position.push(move)
-                value = min(minmax(position,depth - 1, alpha, beta, True), value)
+                value = min(minmax_alpha_beta(position,depth - 1, alpha, beta), value)
                 position.pop()
                 if value <= alpha:
                     break #alpha cutoff
@@ -141,13 +172,13 @@ def next_move_minmax(position, maximizer):
     best_move = None
     for move in position.generate_legal_moves():
         position.push(move)
-        if maximizer and best_move_score <= minmax(position, depth_var, -float('inf'), float('inf'),  True) :
+        if maximizer and best_move_score <= minmax_alpha_beta(position, depth_var, -float('inf'), float('inf'),  True) :
             best_move = move
-        if (not maximizer) and best_move_score >= minmax(position, depth_var, -float('inf'), float('inf'), True) :
+        if (not maximizer) and best_move_score >= minmax_alpha_beta(position, depth_var, -float('inf'), float('inf'), True) :
             best_move = move
         position.pop()
     print(move)
-    return move
+    return best_move
 
 def next_move_random(position): 
     rand = randint(1, position.legal_moves.count())
@@ -191,8 +222,4 @@ def cpu_v_cpu_stats(N_games):
     n_black_victories = n_black_victories/N_games * 100
     average_end_turn = average_end_turn/N_games
     print("White won ", n_white_victories, " \% games, black won ", n_black_victories, " \% games. Average number of turns to win was ", average_end_turn)
-
-
-#cpu_v_cpu_stats(10)
-print(cpu_v_cpu(board))
 

@@ -76,71 +76,69 @@ piece_values = {
 #computes the material score of a given position for each colour
 #returns very hight score for mate 
 def score(position):
-    white_material = 0
-    black_material = 0
-
     if position.is_checkmate():
-        if position.outcome().winner:
-            return float('inf')
-        else :
-            return - float('inf')
-    #this might need to be moved later: tactically it might be in one's interest to cause a repition if one is losing
-    if position.is_fivefold_repetition():
-        if position.turn:
-            return float('inf') #if fivefold repetition is cause by BLACK (i.e. it is white's turn at the position being evaluated) 
-                                #then return inf to avoid BLACK causing fivefold repetition
-        else :
-            return -float('inf') #same but for stalemate cause by WHITE
+        total_score = float('inf') if position.outcome().winner else -float('inf')
+    else:
+        #count how many of each piece
+        wp = len(position.pieces(chess.PAWN, chess.WHITE)) 
+        wk = len(position.pieces(chess.KNIGHT, chess.WHITE)) 
+        wb = len(position.pieces(chess.BISHOP, chess.WHITE)) 
+        wr = len(position.pieces(chess.ROOK, chess.WHITE)) 
+        wq = len(position.pieces(chess.QUEEN, chess.WHITE)) 
+        wk = len(position.pieces(chess.KING, chess.WHITE)) 
+        bp = len(position.pieces(chess.PAWN, chess.BLACK)) 
+        bk = len(position.pieces(chess.KNIGHT, chess.BLACK)) 
+        bb = len(position.pieces(chess.BISHOP, chess.BLACK)) 
+        br = len(position.pieces(chess.ROOK, chess.BLACK)) 
+        bq = len(position.pieces(chess.QUEEN, chess.BLACK))
+        bk = len(position.pieces(chess.KING, chess.BLACK)) 
 
-    #count how many of each piece
-    wp = len(position.pieces(chess.PAWN, chess.WHITE)) 
-    wk = len(position.pieces(chess.KNIGHT, chess.WHITE)) 
-    wb = len(position.pieces(chess.BISHOP, chess.WHITE)) 
-    wr = len(position.pieces(chess.ROOK, chess.WHITE)) 
-    wq = len(position.pieces(chess.QUEEN, chess.WHITE)) 
-    bp = len(position.pieces(chess.PAWN, chess.BLACK)) 
-    bk = len(position.pieces(chess.KNIGHT, chess.BLACK)) 
-    bb = len(position.pieces(chess.BISHOP, chess.BLACK)) 
-    br = len(position.pieces(chess.ROOK, chess.BLACK)) 
-    bq = len(position.pieces(chess.QUEEN, chess.BLACK)) 
+        #each piece gets adds to the score, weighted by its color, type and position on the board.
+        material_score = ((wp - bp) * piece_values[chess.PAWN] + (wk - bk) * piece_values[chess.KNIGHT] 
+        + (wb - bb) * piece_values[chess.BISHOP] + (wr - br) * piece_values[chess.ROOK] + (wq - bq) * piece_values[chess.QUEEN])
+        pwn_score = sum([pawntable[i] for i in position.pieces(chess.PAWN, chess.WHITE)]) 
+        - sum([pawntable[chess.square_mirror(i)] for i in position.pieces(chess.PAWN, chess.BLACK)])
 
-    #each piece gets adds to the score, weighted by its color, type and position on the board.
-    material_score = ((wp - bp) * piece_values[chess.PAWN] + (wk - bk) * piece_values[chess.KNIGHT] 
-    + (wb - bb) * piece_values[chess.BISHOP] + (wr - br) * piece_values[chess.ROOK] + (wq - bq) * piece_values[chess.QUEEN])
-    pwn_score = sum([pawntable[i] for i in position.pieces(chess.PAWN, chess.WHITE)]) 
-    - sum([pawntable[chess.square_mirror(i)] for i in position.pieces(chess.PAWN, chess.BLACK)])
-
-    knight_score = sum([knightstable[i] for i in position.pieces(chess.KNIGHT, chess.WHITE)]) - sum([knightstable[chess.square_mirror(i)] for i in position.pieces(chess.KNIGHT, chess.BLACK)])
-    bishop_score = sum([bishopstable[i] for i in position.pieces(chess.BISHOP, chess.WHITE)]) - sum([bishopstable[chess.square_mirror(i)] for i in position.pieces(chess.BISHOP, chess.BLACK)])
-    rook_score = sum([rookstable[i] for i in position.pieces(chess.ROOK, chess.WHITE)]) - sum([rookstable[chess.square_mirror(i)] for i in position.pieces(chess.ROOK, chess.BLACK)])
-    queen_score = sum([queenstable[i] for i in position.pieces(chess.QUEEN, chess.WHITE)]) - sum([queenstable[chess.square_mirror(i)] for i in position.pieces(chess.QUEEN, chess.BLACK)])
-    
-    total_score = material_score + 2*(pwn_score + knight_score + bishop_score + rook_score + queen_score)
-    
-    #take into account mobility
-    this_mobility = position.legal_moves.count()
-    position.turn = not position.turn
-    mobility_opposite_player = position.legal_moves.count()
-    position.turn = not position.turn
-    signed_mobility = (this_mobility - mobility_opposite_player if 
-                        position.turn else mobility_opposite_player - this_mobility)
+        knight_score = sum([knightstable[i] for i in position.pieces(chess.KNIGHT, chess.WHITE)]) - sum([knightstable[chess.square_mirror(i)] for i in position.pieces(chess.KNIGHT, chess.BLACK)])
+        bishop_score = sum([bishopstable[i] for i in position.pieces(chess.BISHOP, chess.WHITE)]) - sum([bishopstable[chess.square_mirror(i)] for i in position.pieces(chess.BISHOP, chess.BLACK)])
+        rook_score = sum([rookstable[i] for i in position.pieces(chess.ROOK, chess.WHITE)]) - sum([rookstable[chess.square_mirror(i)] for i in position.pieces(chess.ROOK, chess.BLACK)])
+        queen_score = sum([queenstable[i] for i in position.pieces(chess.QUEEN, chess.WHITE)]) - sum([queenstable[chess.square_mirror(i)] for i in position.pieces(chess.QUEEN, chess.BLACK)])
+        
+        total_score = material_score + 2*(pwn_score + knight_score + bishop_score + rook_score + queen_score)
+        
+        #take into account mobility
+        this_mobility = position.legal_moves.count()
+        position.turn = not position.turn
+        mobility_opposite_player = position.legal_moves.count()
+        position.turn = not position.turn
+        signed_mobility = (this_mobility - mobility_opposite_player if 
+                            position.turn else mobility_opposite_player - this_mobility)
     #score += signed_mobility
-    return total_score
+    if position.turn:
+        return total_score
+    else:
+        return -total_score
 
 def easy_score(position):
     wp = len(position.pieces(chess.PAWN, chess.WHITE)) 
     wk = len(position.pieces(chess.KNIGHT, chess.WHITE)) 
     wb = len(position.pieces(chess.BISHOP, chess.WHITE)) 
     wr = len(position.pieces(chess.ROOK, chess.WHITE)) 
-    wq = len(position.pieces(chess.QUEEN, chess.WHITE)) 
+    wq = len(position.pieces(chess.QUEEN, chess.WHITE))
+    wk = len(position.pieces(chess.KING, chess.WHITE))  
     bp = len(position.pieces(chess.PAWN, chess.BLACK)) 
     bk = len(position.pieces(chess.KNIGHT, chess.BLACK)) 
     bb = len(position.pieces(chess.BISHOP, chess.BLACK)) 
     br = len(position.pieces(chess.ROOK, chess.BLACK)) 
     bq = len(position.pieces(chess.QUEEN, chess.BLACK)) 
+    bk = len(position.pieces(chess.KING, chess.BLACK)) 
     material_score = ((wp - bp) * piece_values[chess.PAWN] + (wk - bk) * piece_values[chess.KNIGHT] 
-    + (wb - bb) * piece_values[chess.BISHOP] + (wr - br) * piece_values[chess.ROOK] + (wq - bq) * piece_values[chess.QUEEN])
-    return material_score
+    + (wb - bb) * piece_values[chess.BISHOP] + (wr - br) * piece_values[chess.ROOK] + (wq - bq) * piece_values[chess.QUEEN]
+    + (wk - bk) * piece_values[chess.KING])
+    if position.turn:
+        return material_score
+    else:
+        return -material_score
 
 
 """ test = chess.Board(None)

@@ -28,12 +28,14 @@ def quiece(score_fun, position, alpha, beta) :
 
 def negamax(score_fun, position, depth, alpha, beta) : 
     if depth == 0 or position.is_game_over() :
-        return quiece(score_fun, position, alpha, beta)
+        return score_fun(position) #quiece(score_fun, position, alpha, beta)
     else :
         current_score = -float('inf')                  
         for move in position.legal_moves :
             if position.is_legal(move):
+                #print(position.turn)
                 position.push(move)
+                #print(position.turn)
                 temp = - negamax(score_fun, position, depth - 1, - beta, - alpha )
                 current_score = max(current_score, temp)
                 position.pop()
@@ -47,19 +49,26 @@ def next_move_minmax(score_fun, depth_var, position):
     alpha = -float('inf')
     beta = float('inf')
     is_fivefold = False
+    best_score = -float('inf')
     for move in position.legal_moves:
         position.push(move)
-        board_value = negamax(score_fun, position, depth_var - 1, alpha, beta)
+        board_value = - negamax(score_fun, position, depth_var - 1, -beta, -alpha)
+        #print(board_value)
         #move_scores.append(board_value)
         #print(board_value)
+        best_score = max(board_value, best_score)
         is_fivefold = position.is_fivefold_repetition()
         position.pop()
         #print(board_value)
         #if position.fullmove_number > 50:
             #print(move_scores)
-        if board_value > alpha and (not is_fivefold) :
+        #print(move, board_value, board_value >= alpha)
+        if best_score >= alpha and (not is_fivefold) :
             best_move = move
             alpha = board_value
+            #print("here", alpha)
+        if alpha >= beta:    #beta cut-off
+            return best_move
     return best_move
 
 def next_move_random(position): 
