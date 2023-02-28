@@ -104,7 +104,7 @@ def score(position):
         rook_score = sum([rookstable[i] for i in position.pieces(chess.ROOK, chess.WHITE)]) - sum([rookstable[chess.square_mirror(i)] for i in position.pieces(chess.ROOK, chess.BLACK)])
         queen_score = sum([queenstable[i] for i in position.pieces(chess.QUEEN, chess.WHITE)]) - sum([queenstable[chess.square_mirror(i)] for i in position.pieces(chess.QUEEN, chess.BLACK)])
         
-        total_score = material_score + 2*(pwn_score + knight_score + bishop_score + rook_score + queen_score)
+        total_score = material_score + 0.2*(pwn_score + knight_score + bishop_score + rook_score + queen_score)
         
         #take into account mobility
         this_mobility = position.legal_moves.count()
