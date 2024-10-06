@@ -25,6 +25,8 @@ class NumbersGame(AbstractGame):
     def ended(self, position):
         return (position[0] % 2 == 0 or sum(list(map(int, str(position[0])))) % self.M == 0)
     
+
+#### Test ####
 game = NumbersGame(3, 8)
 position = GamePosition(game, (1, 0))
 game_data = GameData(position)
