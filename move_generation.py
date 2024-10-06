@@ -141,6 +141,7 @@ def next_move_minmax(score_fun, depth_var, position, table, next_moves=[chess.Mo
                 #print("here", alpha)
             if alpha >= beta:    #beta cut-off
                 return (best_move, alpha, best_new_moves)
+        print(best_score)
     return (best_move, alpha, best_new_moves)
 
 #print(next_move_minmax(score, 3, chess.Board(chess.STARTING_FEN), Transposition_table()))

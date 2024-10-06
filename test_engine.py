@@ -17,7 +17,7 @@ class Player():
 
     def generate_move(self, board):
         if self.strategy == "Minmax":
-            move, alpha, next_moves = next_move_minmax(score, self.depth, board, self.table, self.next_moves)
+            move, alpha, next_moves = next_move_minmax(easy_score, self.depth, board, self.table, self.next_moves)
             self.next_moves = next_moves
             self.scores.append(alpha)
             return move
@@ -38,7 +38,7 @@ class Player():
 def cpu_v_cpu(position):
     turn_count = 0
     is_white_turn = True
-    player_1 = Player("Minmax", 4)
+    player_1 = Player("Minmax", 5)
     player_2 = Player("Random")
 
     while not position.is_game_over():
@@ -64,7 +64,8 @@ def cpu_v_cpu(position):
             player_2.play_move(position)
 
         turn_count +=1
-
+        print(position)
+        input(" ")
     print(position.outcome())
     print(player_1)
     return position             #white loses
